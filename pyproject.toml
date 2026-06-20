@@ -22,8 +22,20 @@ dev = [
     "pytest>=8.0.0",
 ]
 diarization = [
-    "pyannote.audio>=3.1",
+    "pyannote.audio>=3.1,<4",
+    # pyannote 3.x 호환 + Python 3.13 휠 존재 범위:
+    # torch 2.6~2.7 (cp313 휠 O), torchaudio <2.8 (AudioMetaData 보유, torchcodec 불필요).
+    # 기본은 CPU 빌드. GPU 사용법은 README "화자 분리" 참고.
+    "torch>=2.6,<2.8",
+    "torchaudio>=2.6,<2.8",
+    # pyannote 3.x는 hf_hub의 use_auth_token을 사용 → 1.0에서 제거됨. <1.0으로 고정.
+    # (base 의존성도 모두 <1.0/<2.0 허용하므로 안전)
+    "huggingface-hub>=0.30,<1.0",
 ]
+
+[tool.uv]
+# Windows에서 torch/torchaudio의 win_amd64 휠을 반드시 해석하도록 강제
+required-environments = ["sys_platform == 'win32' and platform_machine == 'AMD64'"]
 
 [build-system]
 requires = ["hatchling"]

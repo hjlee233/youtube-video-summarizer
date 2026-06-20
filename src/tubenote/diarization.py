@@ -97,12 +97,29 @@ def diarize(
             "pyannote.audio가 설치되어 있지 않습니다. `uv sync --extra diarization`로 설치하세요."
         ) from exc
 
+    # torch 2.6+는 torch.load의 weights_only 기본값이 True라 pyannote 체크포인트
+    # 로딩이 실패한다. 공식 pyannote 모델이므로 로딩 동안만 False로 전환한다.
+    import torch as _torch
+
+    _orig_load = _torch.load
+
+    def _full_load(*a, **k):
+        k["weights_only"] = False  # 호출자가 True를 명시해도 강제로 끔 (공식 모델)
+        return _orig_load(*a, **k)
+
     try:
-        pipeline = Pipeline.from_pretrained(_DIARIZATION_MODEL, use_auth_token=hf_token)
+        _torch.load = _full_load
+        # pyannote 4.x는 token=, 3.x는 use_auth_token= 를 사용
+        try:
+            pipeline = Pipeline.from_pretrained(_DIARIZATION_MODEL, token=hf_token)
+        except TypeError:
+            pipeline = Pipeline.from_pretrained(_DIARIZATION_MODEL, use_auth_token=hf_token)
     except Exception as exc:  # 게이트/네트워크/라이선스 등
         raise DiarizationError(
             f"화자 분리 모델 로딩 실패(라이선스 동의·HF_TOKEN 확인): {exc}"
         ) from exc
+    finally:
+        _torch.load = _orig_load
 
     # 장치 배치
     resolved = config.device
