@@ -36,8 +36,13 @@ uv sync
 
 ## UI 실행 (Streamlit)
 
+**간편 실행:** `run.bat` 더블클릭 (또는 바탕화면 "TubeNote Local" 바로가기) →
+서버가 뜨고 브라우저가 자동으로 열린다(`http://localhost:8800`). 종료는 창에서 Ctrl+C.
+
+명령으로 실행하려면:
+
 ```powershell
-uv run streamlit run app.py
+uv run streamlit run app.py --server.port 8800
 ```
 
 브라우저에서 사이드바 설정 → URL 입력 → 미리보기 → 분석 시작 → 결과 탭(요약/목차/상세/대본/JSON)
