@@ -129,11 +129,15 @@ uv run python -m tubenote.cli "<URL>" --provider ollama --summary-model llama3.1
 
 여러 화자가 등장하는 영상에서 발화자를 구분한다(pyannote.audio). 무거운 선택 기능이라 기본 OFF.
 
-1. **설치**: `uv sync --extra diarization` (pyannote.audio + torch 등 추가 — 수 GB)
+1. **설치**: `uv sync --extra diarization` (pyannote.audio + **CUDA torch(cu128)** 등 — 수 GB).
+   `pyproject.toml`에 CUDA 인덱스가 설정돼 있어 NVIDIA GPU에서 자동 가속된다.
 2. **HF 토큰**: `.env`에 `HF_TOKEN=hf_...` 추가
 3. **라이선스 동의**: HuggingFace에서 `pyannote/speaker-diarization-3.1`,
    `pyannote/segmentation-3.0` 모델 약관에 동의(접속 후 1회)
 4. 실행: `--diarize`(CLI) 또는 UI "화자 분리 (pyannote)" 체크
+
+`device: auto`가 GPU를 자동 감지한다(없으면 CPU). 26분 영상 기준 **RTX 4090 약 1분 vs CPU 약 10분**.
+torch는 pyannote 3.x 호환을 위해 2.7.x로 고정한다(torchaudio<2.8 `AudioMetaData`, hf_hub<1.0).
 
 결과 대본의 각 줄에 `SPEAKER_00` 등 라벨이 붙고, UI의 **"화자 이름 변경"** 으로 실제 이름으로
 바꿀 수 있다(변경 시 result.json·summary.md 갱신). 화자 라벨은 요약 프롬프트에도 전달되어

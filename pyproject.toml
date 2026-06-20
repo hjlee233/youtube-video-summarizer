@@ -37,6 +37,17 @@ diarization = [
 # Windows에서 torch/torchaudio의 win_amd64 휠을 반드시 해석하도록 강제
 required-environments = ["sys_platform == 'win32' and platform_machine == 'AMD64'"]
 
+# 화자 분리(pyannote)용 torch를 CUDA(cu128) 빌드로 설치해 GPU 가속.
+# torch 2.7.x는 cu128 + cp313 휠을 제공한다. 화자 분리 extra 설치 시에만 적용.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchaudio = { index = "pytorch-cu128" }
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
