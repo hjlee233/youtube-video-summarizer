@@ -8,10 +8,10 @@
 
 ## 현재 진행 상황
 
-**1~4단계 + P1** — CLI(다운로드 → STT → 청크 분할 → LLM 요약(Map-Reduce) → Markdown/JSON),
+**1~5단계 + P1** — CLI(다운로드 → STT → 청크 분할 → LLM 요약(Map-Reduce) → Markdown/JSON),
 **Streamlit UI**, **로그인 영상·보안 정리**(브라우저 쿠키, 민감정보 마스킹, 클라우드 전송 안내,
-임시 폴더 정리), **동일 영상 캐시·중단 후 재개**까지 구현. 요약 자격증명이 없으면 대본까지만 저장한다.
-화자 분리는 이후(2차)에 추가한다.
+임시 폴더 정리), **동일 영상 캐시·중단 후 재개**, **화자 분리(pyannote, 선택)**까지 구현.
+요약 자격증명이 없으면 대본까지만 저장한다.
 
 > **캐시/재개:** 같은 영상을 다시 처리하면 `result.json`의 대본을 재사용해 다운로드·STT를 건너뛴다.
 > 요약 도중 중단되었다면 STT 재실행 없이 요약부터 이어간다. `--reprocess`(CLI) 또는 UI의
@@ -67,6 +67,7 @@ uv run python -m tubenote.cli "https://www.youtube.com/watch?v=VIDEO_ID"
 | `--allow-remote-components` | 멤버십/보호 영상의 JS 챌린지 해석 허용 (Deno + 외부 JS 솔버) |
 | `--no-summary` | LLM 요약을 건너뛰고 대본만 생성 |
 | `--reprocess` | 캐시(기존 결과)를 무시하고 다운로드·STT부터 강제 재처리 |
+| `--diarize` | 화자 분리(pyannote) 수행 (`--extra diarization` + HF_TOKEN 필요) |
 | `--provider` | 요약 제공자: `openai_compatible` / `ollama` |
 | `--summary-model` | 요약 LLM 모델명 |
 | `--detail` | 요약 상세도: `simple` / `standard` / `detailed` |
@@ -124,10 +125,27 @@ uv run python -m tubenote.cli "<URL>" --provider ollama --summary-model llama3.1
    > ⚠️ 이 옵션은 **외부 JavaScript를 내려받아 실행**하므로 기본 비활성이다. 필요한 영상에만 켠다.
    > 생방송 중인 영상은 처리하지 않는다(다시보기는 가능).
 
+## 화자 분리 (선택)
+
+여러 화자가 등장하는 영상에서 발화자를 구분한다(pyannote.audio). 무거운 선택 기능이라 기본 OFF.
+
+1. **설치**: `uv sync --extra diarization` (pyannote.audio + torch 등 추가 — 수 GB)
+2. **HF 토큰**: `.env`에 `HF_TOKEN=hf_...` 추가
+3. **라이선스 동의**: HuggingFace에서 `pyannote/speaker-diarization-3.1`,
+   `pyannote/segmentation-3.0` 모델 약관에 동의(접속 후 1회)
+4. 실행: `--diarize`(CLI) 또는 UI "화자 분리 (pyannote)" 체크
+
+결과 대본의 각 줄에 `SPEAKER_00` 등 라벨이 붙고, UI의 **"화자 이름 변경"** 으로 실제 이름으로
+바꿀 수 있다(변경 시 result.json·summary.md 갱신). 화자 라벨은 요약 프롬프트에도 전달되어
+상세 요약에서 발화자별 주장 구분에 활용된다. pyannote 실패 시 화자 없이 대본만 생성된다.
+
+> WhisperX 대신 pyannote를 직접 사용한다 — 기존 faster-whisper STT를 그대로 재사용하고
+> 의존성 충돌을 피하기 위함. 화자는 STT 세그먼트에 시간 겹침 기준으로 배정된다.
+
 ## 설정
 
 - 일반 설정: `config.yaml` (없으면 `config.example.yaml` 기본값 사용). `config.example.yaml`을 복사해 사용.
-- 비밀 정보: `.env` (요약 API 키). `.env.example` 참고.
+- 비밀 정보: `.env` (요약 API 키 `OPENAI_API_KEY`, 화자 분리 `HF_TOKEN`). `.env.example` 참고.
 - `config.yaml` 값은 **CLI·UI의 기본값**을 함께 구동한다. CLI 옵션은 그때그때 이를 덮어쓴다.
 - 주요 섹션: `transcription`(STT 모델·장치·정밀도·언어), `summary`(제공자·모델·상세도·청크 크기·
   `temperature`), `youtube`(기본 로그인 브라우저·원격 컴포넌트 허용), `privacy`(오디오 보관·대본 포함).

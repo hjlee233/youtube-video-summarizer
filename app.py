@@ -12,7 +12,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from tubenote import security, storage, youtube
+from tubenote import diarization, renderer as _renderer, security, storage, youtube
 from tubenote.config import Config
 from tubenote.errors import TubeNoteError
 from tubenote.models import FinalSummary, Result
@@ -53,6 +53,11 @@ def build_config() -> tuple[Config, str | None, bool]:
     device = st.sidebar.selectbox("실행 장치", devices, index=devices.index(base.transcription.device) if base.transcription.device in devices else 0)
     ctypes = ["auto", "float16", "int8_float16", "int8", "float32"]
     compute_type = st.sidebar.selectbox("연산 정밀도", ctypes, index=ctypes.index(base.transcription.compute_type) if base.transcription.compute_type in ctypes else 0)
+    diarize = st.sidebar.checkbox(
+        "화자 분리 (pyannote)",
+        value=base.diarization.enabled,
+        help="pyannote.audio 필요(uv sync --extra diarization) + .env의 HF_TOKEN + 모델 라이선스 동의.",
+    )
 
     st.sidebar.subheader("요약 (LLM)")
     do_summary = st.sidebar.checkbox("요약 생성", value=False)
@@ -85,6 +90,7 @@ def build_config() -> tuple[Config, str | None, bool]:
     base.transcription.language = language
     base.transcription.device = device
     base.transcription.compute_type = compute_type
+    base.diarization.enabled = diarize
     base.summary.provider = provider
     base.summary.model = summary_model
     base.summary.detail = detail
@@ -166,11 +172,36 @@ def _transcript_markdown(result: Result) -> str:
     lines = []
     for seg in result.transcript:
         link = f"[{format_hms(seg.start)}]({timestamp_url(vid, seg.start)})"
-        lines.append(f"- {link} {seg.text}")
+        speaker = f"**{seg.speaker}** " if seg.speaker else ""
+        lines.append(f"- {link} {speaker}{seg.text}")
     return "\n".join(lines)
 
 
-def show_results(result: Result, result_path: Path, markdown_path: Path | None) -> None:
+def _speaker_rename_ui(result: Result, config: Config) -> None:
+    """화자 이름 변경 UI (기획안 5단계). 적용 시 result.json·summary.md 갱신."""
+    speakers = diarization.unique_speakers(result.transcript)
+    if not speakers:
+        return
+    with st.expander(f"🗣️ 화자 이름 변경 ({len(speakers)}명)"):
+        with st.form("rename_speakers"):
+            mapping: dict[str, str] = {}
+            for spk in speakers:
+                mapping[spk] = st.text_input(spk, value="", placeholder="새 이름 (비우면 유지)")
+            if st.form_submit_button("적용"):
+                result.transcript = diarization.rename_speakers(result.transcript, mapping)
+                storage.save_result(config.paths.result_dir, result)
+                md_text = _renderer.render_markdown(
+                    result, include_full_transcript=config.privacy.include_full_transcript
+                )
+                storage.save_markdown(config.paths.result_dir, result.metadata.video_id, md_text)
+                st.session_state["result"] = result
+                st.success("화자 이름을 적용했습니다.")
+                st.rerun()
+
+
+def show_results(
+    result: Result, result_path: Path, markdown_path: Path | None, config: Config
+) -> None:
     md = result.metadata
     st.subheader(md.title)
     cols = st.columns([1, 2])
@@ -205,6 +236,8 @@ def show_results(result: Result, result_path: Path, markdown_path: Path | None) 
             os.startfile(result_path.parent)  # noqa: S606 (로컬 단일 사용자)
         except Exception as exc:  # pragma: no cover
             st.warning(f"폴더를 열 수 없습니다: {exc}")
+
+    _speaker_rename_ui(result, config)
 
     tabs = st.tabs(["요약", "시간순 목차", "상세 정리", "전체 대본", "원본 JSON"])
     fs = result.final_summary
@@ -331,6 +364,7 @@ def main() -> None:
             st.session_state["result"],
             st.session_state.get("result_path", Path()),
             st.session_state.get("markdown_path"),
+            config,
         )
 
 

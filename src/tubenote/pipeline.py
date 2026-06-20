@@ -15,8 +15,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from . import audio, chunking, renderer, security, storage, summarizer, transcript, youtube
+from . import (
+    audio,
+    chunking,
+    diarization,
+    renderer,
+    security,
+    storage,
+    summarizer,
+    transcript,
+    youtube,
+)
 from .config import Config
+from .diarization import DiarizationError
 from .errors import SummaryError, SummaryNotConfiguredError
 from .models import (
     Job,
@@ -228,6 +239,19 @@ def run_transcription_pipeline(
         # 정규화
         segments = transcript.normalize_segments(raw_segments)
         log("transcribe", f"세그먼트 {len(segments)}개 (감지 언어: {detected_language})")
+
+        # 화자 분리 (선택, 기획안 5단계) — wav 삭제 전에 실행. 실패해도 대본은 유지.
+        if config.diarization.enabled:
+            try:
+                log("diarize", "화자 분리를 시작합니다 (pyannote).")
+                turns = diarization.diarize(
+                    wav_path, config.diarization, hf_token=config.secrets.hf_token
+                )
+                segments = diarization.assign_speakers(segments, turns)
+                n_spk = len(diarization.unique_speakers(segments))
+                log("diarize", f"화자 {n_spk}명 배정 완료.")
+            except DiarizationError as exc:
+                log("diarize", f"화자 분리 실패 — 화자 없이 진행합니다: {exc}")
 
         # 대본 결과 저장 (요약 전에 먼저 저장해 STT 결과를 보존 → 재개 가능)
         result = Result(

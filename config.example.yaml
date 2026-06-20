@@ -25,6 +25,12 @@ youtube:
   # 사용하려면 Deno 설치 필요. 일반 공개 영상에는 불필요하므로 기본 false.
   allow_remote_components: false
 
+diarization:
+  enabled: false        # 화자 분리(pyannote). uv sync --extra diarization + HF_TOKEN + 라이선스 동의 필요
+  device: auto          # auto | cpu | cuda
+  min_speakers:         # (선택) 최소 화자 수
+  max_speakers:         # (선택) 최대 화자 수
+
 privacy:
   keep_audio: false
   # 요약 Markdown(summary.md)에 전체 대본을 포함할지 여부.

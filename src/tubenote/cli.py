@@ -63,6 +63,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "GitHub에서 받아 Deno로 실행하도록 허용합니다 (Deno 설치 필요).",
     )
     parser.add_argument(
+        "--diarize",
+        action="store_true",
+        help="화자 분리(pyannote)를 수행합니다. `uv sync --extra diarization` + HF_TOKEN 필요.",
+    )
+    parser.add_argument(
         "--keep-audio",
         action="store_true",
         help="처리 후 임시 오디오를 삭제하지 않습니다.",
@@ -144,6 +149,8 @@ def main(argv: list[str] | None = None) -> int:
         config.summary.detail = args.detail
     if args.allow_remote_components:
         config.youtube.allow_remote_components = True
+    if args.diarize:
+        config.diarization.enabled = True
 
     # --cookies-from-browser가 우선, 없으면 config의 기본 브라우저 사용
     cookies = args.cookies_from_browser or config.youtube.cookies_from_browser or None

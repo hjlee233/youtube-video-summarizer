@@ -25,8 +25,12 @@ class TranscriptChunk(BaseModel):
         return sum(len(s.text) for s in self.segments)
 
     def to_prompt_text(self) -> str:
-        """LLM 입력용 텍스트. 각 줄 앞에 시작 초를 붙여 타임스탬프 인용을 돕는다."""
-        return "\n".join(f"[{int(s.start)}s] {s.text}" for s in self.segments)
+        """LLM 입력용 텍스트. 각 줄 앞에 시작 초(+화자)를 붙여 인용·화자 구분을 돕는다."""
+        lines = []
+        for s in self.segments:
+            speaker = f"{s.speaker}: " if s.speaker else ""
+            lines.append(f"[{int(s.start)}s] {speaker}{s.text}")
+        return "\n".join(lines)
 
 
 def build_chunks(

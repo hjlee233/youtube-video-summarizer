@@ -56,6 +56,15 @@ class YoutubeConfig(BaseModel):
     allow_remote_components: bool = False
 
 
+class DiarizationConfig(BaseModel):
+    # 화자 분리 (pyannote.audio). 무거운 선택 기능이라 기본 False.
+    # 사용하려면 `uv sync --extra diarization` + .env의 HF_TOKEN + 모델 라이선스 동의 필요.
+    enabled: bool = False
+    device: str = "auto"  # auto | cpu | cuda
+    min_speakers: int | None = None
+    max_speakers: int | None = None
+
+
 class PrivacyConfig(BaseModel):
     keep_audio: bool = False
     # 요약 Markdown에 전체 대본 포함 여부. 기본 False (대본은 result.json에 보존).
@@ -71,6 +80,7 @@ class Secrets(BaseSettings):
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_base_url: str = Field(default="", alias="OPENAI_BASE_URL")
+    hf_token: str = Field(default="", alias="HF_TOKEN")  # pyannote 화자 분리용
 
 
 class Config(BaseModel):
@@ -78,6 +88,7 @@ class Config(BaseModel):
     transcription: TranscriptionConfig = Field(default_factory=TranscriptionConfig)
     summary: SummaryConfig = Field(default_factory=SummaryConfig)
     youtube: YoutubeConfig = Field(default_factory=YoutubeConfig)
+    diarization: DiarizationConfig = Field(default_factory=DiarizationConfig)
     privacy: PrivacyConfig = Field(default_factory=PrivacyConfig)
     secrets: Secrets = Field(default_factory=Secrets)
 

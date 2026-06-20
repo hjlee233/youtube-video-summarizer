@@ -142,7 +142,9 @@ def render_markdown(result: Result, *, include_full_transcript: bool = False) ->
         out.append("")
         for seg in result.transcript:
             link = _ts_link(video_id, seg.start)
-            out.append(f"- {link} {seg.text}" if link else f"- {seg.text}")
+            speaker = f"**{seg.speaker}** " if seg.speaker else ""
+            prefix = f"{link} " if link else ""
+            out.append(f"- {prefix}{speaker}{seg.text}")
         out.append("")
 
     return "\n".join(out)
