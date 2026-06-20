@@ -239,6 +239,11 @@ def main() -> None:
     c1, c2 = st.columns([1, 1])
     preview_clicked = c1.button("🔎 영상 정보 미리보기")
     start_clicked = c2.button("▶️ 분석 시작", type="primary")
+    force_reprocess = st.checkbox(
+        "강제 재처리 (캐시 무시)",
+        value=False,
+        help="이미 처리된 영상도 다운로드·STT부터 다시 처리합니다. 기본은 기존 대본 재사용.",
+    )
 
     # 미리보기 + 기존 결과 감지
     if preview_clicked and url.strip():
@@ -302,10 +307,12 @@ def main() -> None:
                     config,
                     cookies_from_browser=cookies,
                     summarize_enabled=do_summary,
+                    force_reprocess=force_reprocess,
                     log=ui_log,
                 )
                 progress_bar.progress(1.0)
-                status.success(f"완료! (총 {time.time() - t0:.0f}s)")
+                _cache_note = " · 기존 대본 재사용(캐시)" if outcome.from_cache else ""
+                status.success(f"완료! (총 {time.time() - t0:.0f}s){_cache_note}")
                 st.session_state["result"] = outcome.result
                 st.session_state["result_path"] = outcome.result_path
                 st.session_state["markdown_path"] = outcome.markdown_path

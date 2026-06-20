@@ -8,10 +8,14 @@
 
 ## 현재 진행 상황
 
-**1~4단계** — CLI(다운로드 → STT → 청크 분할 → LLM 요약(Map-Reduce) → Markdown/JSON),
+**1~4단계 + P1** — CLI(다운로드 → STT → 청크 분할 → LLM 요약(Map-Reduce) → Markdown/JSON),
 **Streamlit UI**, **로그인 영상·보안 정리**(브라우저 쿠키, 민감정보 마스킹, 클라우드 전송 안내,
-임시 폴더 정리)까지 구현. 요약 자격증명이 없으면 대본까지만 저장한다.
-작업 상태 기반 재개와 화자 분리는 이후 단계에서 추가한다.
+임시 폴더 정리), **동일 영상 캐시·중단 후 재개**까지 구현. 요약 자격증명이 없으면 대본까지만 저장한다.
+화자 분리는 이후(2차)에 추가한다.
+
+> **캐시/재개:** 같은 영상을 다시 처리하면 `result.json`의 대본을 재사용해 다운로드·STT를 건너뛴다.
+> 요약 도중 중단되었다면 STT 재실행 없이 요약부터 이어간다. `--reprocess`(CLI) 또는 UI의
+> "강제 재처리"로 캐시를 무시할 수 있다.
 
 ## 사전 요구사항
 
@@ -62,6 +66,7 @@ uv run python -m tubenote.cli "https://www.youtube.com/watch?v=VIDEO_ID"
 | `--cookies-from-browser` | 로그인 영상용 브라우저 (`chrome`/`edge`/`firefox`) |
 | `--allow-remote-components` | 멤버십/보호 영상의 JS 챌린지 해석 허용 (Deno + 외부 JS 솔버) |
 | `--no-summary` | LLM 요약을 건너뛰고 대본만 생성 |
+| `--reprocess` | 캐시(기존 결과)를 무시하고 다운로드·STT부터 강제 재처리 |
 | `--provider` | 요약 제공자: `openai_compatible` / `ollama` |
 | `--summary-model` | 요약 LLM 모델명 |
 | `--detail` | 요약 상세도: `simple` / `standard` / `detailed` |

@@ -73,6 +73,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="LLM 요약을 건너뛰고 대본만 생성합니다.",
     )
     parser.add_argument(
+        "--reprocess",
+        action="store_true",
+        help="기존 결과(캐시)를 무시하고 다운로드·STT부터 강제로 다시 처리합니다.",
+    )
+    parser.add_argument(
         "--provider",
         help="요약 제공자 (openai_compatible | ollama). 설정값을 덮어씁니다.",
         default=None,
@@ -149,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
             config,
             cookies_from_browser=cookies,
             summarize_enabled=not args.no_summary,
+            force_reprocess=args.reprocess,
             log=_log,
         )
     except TubeNoteError as exc:
@@ -162,6 +168,8 @@ def main(argv: list[str] | None = None) -> int:
         return 130
 
     print(f"\n완료: {outcome.result_path}")
+    if outcome.from_cache:
+        print("(기존 대본 재사용 — 다운로드·STT 건너뜀)")
     print(f"세그먼트 {len(outcome.result.transcript)}개")
     if outcome.markdown_path is not None:
         print(f"Markdown: {outcome.markdown_path}")
