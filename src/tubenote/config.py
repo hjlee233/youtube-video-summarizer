@@ -42,6 +42,8 @@ class SummaryConfig(BaseModel):
     detail: str = "standard"
     chunk_chars: int = 7000
     max_retries: int = 3
+    # 0 = 결정적(greedy). 충실 요약·재현성을 위해 기본 0.
+    temperature: float = 0.0
 
 
 class YoutubeConfig(BaseModel):

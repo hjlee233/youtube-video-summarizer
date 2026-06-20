@@ -129,8 +129,10 @@ uv run python -m tubenote.cli "<URL>" --provider ollama --summary-model llama3.1
 - 일반 설정: `config.yaml` (없으면 `config.example.yaml` 기본값 사용). `config.example.yaml`을 복사해 사용.
 - 비밀 정보: `.env` (요약 API 키). `.env.example` 참고.
 - `config.yaml` 값은 **CLI·UI의 기본값**을 함께 구동한다. CLI 옵션은 그때그때 이를 덮어쓴다.
-- 주요 섹션: `transcription`(STT 모델·장치·정밀도·언어), `summary`(제공자·모델·상세도·청크 크기),
-  `youtube`(기본 로그인 브라우저·원격 컴포넌트 허용), `privacy`(오디오 보관·대본 포함).
+- 주요 섹션: `transcription`(STT 모델·장치·정밀도·언어), `summary`(제공자·모델·상세도·청크 크기·
+  `temperature`), `youtube`(기본 로그인 브라우저·원격 컴포넌트 허용), `privacy`(오디오 보관·대본 포함).
+- `summary.temperature`는 기본 `0`(결정적)이다. OpenAI는 0에서도 완전 동일을 보장하진 않지만
+  run 간 변동이 크게 줄어 충실 요약에 적합하다.
 
 ## 프로젝트 구조
 

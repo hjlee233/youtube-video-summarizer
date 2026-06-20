@@ -127,6 +127,7 @@ class Summarizer:
         self.log = log
         self.model = config.summary.model
         self.max_retries = max(1, config.summary.max_retries)
+        self.temperature = config.summary.temperature
 
         if config.summary.provider == "ollama":
             base_url = config.secrets.openai_base_url or _OLLAMA_BASE_URL
@@ -145,7 +146,7 @@ class Summarizer:
                 resp = self.client.chat.completions.create(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
-                    temperature=0.2,
+                    temperature=self.temperature,
                     response_format={"type": "json_object"},
                 )
                 return resp.choices[0].message.content or ""
@@ -157,7 +158,7 @@ class Summarizer:
                         resp = self.client.chat.completions.create(
                             model=self.model,
                             messages=[{"role": "user", "content": prompt}],
-                            temperature=0.2,
+                            temperature=self.temperature,
                         )
                         return resp.choices[0].message.content or ""
                     except Exception as exc2:  # noqa: BLE001

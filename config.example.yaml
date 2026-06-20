@@ -17,6 +17,7 @@ summary:
   detail: standard              # simple | standard | detailed
   chunk_chars: 7000
   max_retries: 3
+  temperature: 0.0              # 0 = 결정적(재현성↑). 충실 요약 권장값
 
 youtube:
   cookies_from_browser: ""          # "" | chrome | edge | firefox (로그인/비공개 영상용 기본 브라우저)
