@@ -1,0 +1,31 @@
+paths:
+  data_dir: data
+  temp_dir: data/temp
+  result_dir: data/results
+
+transcription:
+  model: medium          # small | medium | large-v3
+  device: auto           # auto | cpu | cuda
+  compute_type: auto     # auto | int8 | int8_float16 | float16 | float32 (auto: GPU->int8_float16, CPU->int8)
+  language: auto         # auto | ko | en | ja
+  vad_filter: true
+  beam_size: 5
+
+summary:
+  provider: openai_compatible   # openai_compatible | ollama
+  model: ""
+  detail: standard              # simple | standard | detailed
+  chunk_chars: 7000
+  max_retries: 3
+
+youtube:
+  cookies_from_browser: ""          # "" | chrome | edge | firefox (로그인/비공개 영상용 기본 브라우저)
+  # 멤버십/보호 영상의 JS 서명 챌린지 해석 허용 (외부 JS 솔버를 GitHub에서 받아 Deno로 실행).
+  # 사용하려면 Deno 설치 필요. 일반 공개 영상에는 불필요하므로 기본 false.
+  allow_remote_components: false
+
+privacy:
+  keep_audio: false
+  # 요약 Markdown(summary.md)에 전체 대본을 포함할지 여부.
+  # false여도 대본은 result.json에 항상 보존된다 (추후 별도 내보내기 기능에서 활용).
+  include_full_transcript: false

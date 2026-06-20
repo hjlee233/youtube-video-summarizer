@@ -1,0 +1,21 @@
+# 비밀 정보 / 환경
+.env
+config.yaml
+
+# 데이터 / 출력
+data/temp/
+data/jobs/
+data/results/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# 모델 캐시
+.cache/
